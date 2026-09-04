@@ -303,7 +303,48 @@ function Giveaway() {
             <span>winner status</span>
           </div>
         </div>
+{result?.drawn && result.winnerWallet && (
+  <section className="result-card">
+    <p className="result-label">winner</p>
+    <strong className="winner-address">
+      {result.winnerWallet}
+    </strong>
 
+    {result.drawnAt && (
+      <p className="drawn-at">
+        drawn {new Date(result.drawnAt).toLocaleString()}
+      </p>
+    )}
+
+    {result.audit && (
+      <details className="audit">
+        <summary>view draw proof</summary>
+        <dl>
+          <div>
+            <dt>eligible entries</dt>
+            <dd>{result.audit.entryCount}</dd>
+          </div>
+          <div>
+            <dt>winner index</dt>
+            <dd>{result.audit.winnerIndex}</dd>
+          </div>
+          <div>
+            <dt>random value</dt>
+            <dd>{result.audit.randomValue}</dd>
+          </div>
+          <div>
+            <dt>sha-256 commitment</dt>
+            <dd>{result.audit.randomCommitment}</dd>
+          </div>
+          <div>
+            <dt>selection method</dt>
+            <dd>{result.audit.algorithm}</dd>
+          </div>
+        </dl>
+      </details>
+    )}
+  </section>
+)}
         <WalletMultiButton />
 
         {connected && (
@@ -567,7 +608,59 @@ function Giveaway() {
           color: #82949e;
           font-size: 9px;
         }
+.result-card {
+  margin: 14px 0;
+  padding: 16px;
+  text-align: left;
+  background: #15221a;
+  border: 1px solid #3e6531;
+  border-radius: 12px;
+}
 
+.result-label {
+  margin: 0 0 7px;
+  color: #9cff57;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.winner-address {
+  display: block;
+  color: #edf8f1;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.drawn-at {
+  margin: 8px 0 0;
+  color: #82949e;
+  font-size: 10px;
+}
+
+.audit {
+  margin-top: 14px;
+  color: #9cff57;
+  font-size: 11px;
+}
+
+.audit dl {
+  margin: 10px 0 0;
+}
+
+.audit dl div {
+  padding: 8px 0;
+  border-top: 1px solid #2c4232;
+}
+
+.audit dt {
+  color: #82949e;
+}
+
+.audit dd {
+  margin: 4px 0 0;
+  color: #edf8f1;
+  overflow-wrap: anywhere;
+}
         .wallet-adapter-button,
         .enter {
           width: 100%;
