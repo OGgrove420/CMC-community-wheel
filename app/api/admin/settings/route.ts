@@ -174,6 +174,7 @@ export async function POST(request: Request) {
         prize = ${prize},
         ends_at = ${endsAt.toISOString()},
         entries_open = ${entriesOpen},
+        giveaway_round = giveaway_round + 1,
         winner_entry_id = NULL,
         drawn_at = NULL,
         updated_at = NOW()
