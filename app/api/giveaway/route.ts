@@ -23,8 +23,13 @@ export async function GET() {
     `;
 
     const countRows = await sql`
-      SELECT COUNT(*)::INTEGER AS count
-      FROM giveaway_entries
+SELECT COUNT(*)::INTEGER AS count
+FROM giveaway_entries
+WHERE giveaway_round = (
+  SELECT giveaway_round
+  FROM giveaway_settings
+  WHERE id = 1
+)
     `;
 
     const settings = settingsRows[0];
