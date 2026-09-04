@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
-import { initializeDatabase, sql } from "../../../..//lib/db";
+import { initializeDatabase, sql } from "../../../lib/db";
 
 export const runtime = "nodejs";
 
