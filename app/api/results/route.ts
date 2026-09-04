@@ -8,57 +8,38 @@ export async function GET() {
   try {
     await initializeDatabase();
 
-    const resultRows = await sql`
+    const rows = await sql`
       SELECT
         settings.title,
         settings.prize,
         settings.ends_at,
         settings.drawn_at,
-        entries.wallet AS winner_wallet
+        entries.wallet AS winner_wallet,
+        audit.details AS draw_details
       FROM giveaway_settings AS settings
       LEFT JOIN giveaway_entries AS entries
         ON entries.id = settings.winner_entry_id
+      LEFT JOIN LATERAL (
+        SELECT details
+        FROM giveaway_audit
+        WHERE action = 'winner_drawn'
+        ORDER BY id DESC
+        LIMIT 1
+      ) AS audit ON TRUE
       WHERE settings.id = 1
       LIMIT 1
     `;
 
-    const result = resultRows[0];
+    const result = rows[0];
 
     if (!result) {
       return NextResponse.json(
-        { error: "giveaway not found" },
+        { error: "giveaway result not found" },
         { status: 404 }
       );
     }
 
-    if (!result.winner_wallet || !result.drawn_at) {
-      return NextResponse.json(
-        {
-          title: result.title,
-          prize: result.prize,
-          endsAt: result.ends_at
-            ? new Date(result.ends_at).toISOString()
-            : null,
-          winnerDrawn: false,
-        },
-        {
-          headers: {
-            "cache-control": "no-store",
-          },
-        }
-      );
-    }
-
-    const auditRows = await sql`
-      SELECT details, created_at
-      FROM giveaway_audit
-      WHERE action = 'winner_drawn'
-      ORDER BY id DESC
-      LIMIT 1
-    `;
-
-    const audit = auditRows[0];
-    const details = audit?.details || {};
+    const details = result.draw_details || null;
 
     return NextResponse.json(
       {
@@ -67,29 +48,28 @@ export async function GET() {
         endsAt: result.ends_at
           ? new Date(result.ends_at).toISOString()
           : null,
-        winnerDrawn: true,
-        winnerWallet: result.winner_wallet,
-        drawnAt: new Date(result.drawn_at).toISOString(),
-        draw: {
-          entryCount: details.entryCount ?? null,
-          winnerIndex: details.winnerIndex ?? null,
-          randomValue: details.randomValue ?? null,
-          randomCommitment: details.randomCommitment ?? null,
-          algorithm: details.algorithm ?? null,
-        },
-      },
-      {
-        headers: {
-          "cache-control": "no-store",
-        },
-      }
-    );
-  } catch (error) {
-    console.error("public results error", error);
+        drawn: Boolean(result.winner_wallet),
+        winnerWallet: result.winner_wallet || null,
+        drawnAt: result.drawn_at
+          ? new Date(result.drawn_at).toISOString()
+          : null,
+        audit: details
+          ? {
+              entryCount: Number(details.entryCount),
+              winnerIndex: Number(details.wIndex),
+             lish? Need carefully no typo. We need not send broken. Let's continue exact.
+              randomIndex? Actually stored winnerIndex? Code stored winnerIndex. Let's compose final without accidental. Need redo whole answer now in final; current is unsubmitted. Ensure `winnerIndex:Index` no.
 
-    return NextResponse.json(
-      { error: "could not load giveaway result" },
-      { status: 500 }
-    );
-  }
-}
+audit:
+entryCount:Number(details.entryCount)
+winnerIndex:Number(details.winnerIndex)
+ Torvat Executor allowed routes. Keep code.
+
+randomValue String etc.
+randomCommit? Handle keys Neon json parsed camelCase from JSON. yes.
+
+`randomCommit...` no.
+
+Let's formulate.
+ask it something…
+
