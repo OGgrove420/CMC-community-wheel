@@ -84,20 +84,22 @@ function Giveaway() {
   const [status, setStatus] = useState("loading giveaway");
   const [loading, setLoading] = useState(false);
 
-  const loadGiveaway = useCallback(async () => {
+   const loadGiveaway = useCallback(async () => {
     try {
       const response = await fetch("/api/giveaway", {
         cache: "no-store",
       });
 
-      const result = await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "could not load giveaway");
+        throw new Error(
+          data.error || "could not load giveaway"
+        );
       }
 
-      setGiveaway(result);
-      setTimeLeft(getTimeLeft(result.endsAt));
+      setGiveaway(data);
+      setTimeLeft(getTimeLeft(data.endsAt));
       setStatus("");
     } catch (error) {
       setStatus(
@@ -107,6 +109,38 @@ function Giveaway() {
       );
     }
   }, []);
+
+  const loadResult = useCallback(async () => {
+    try {
+      const response = await fetch("/api/results", {
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "could not load result"
+        );
+      }
+
+      setResult(data);
+    } catch {
+      setResult(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadGiveaway();
+    loadResult();
+
+    const refresh = window.setInterval(() => {
+      loadGiveaway();
+      loadResult();
+    }, 10000);
+
+    return () => window.clearInterval(refresh);
+  }, [loadGiveaway, loadResult]);
 
  useEffect(() => {
   loadGiveaway();
