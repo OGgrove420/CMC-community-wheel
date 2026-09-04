@@ -41,6 +41,32 @@ export async function POST(request: Request) {
 
     await initializeDatabase();
 
+    const settingsRows = await sql`
+      SELECT
+        entries_open,
+        ends_at,
+        giveaway_round
+      FROM giveaway_settings
+      WHERE id = 1
+      LIMIT 1
+    `;
+
+    const settings = settingsRows[0];
+
+    if (
+      !settings ||
+      !settings.entries_open ||
+      !settings.ends_at ||
+      new Date(settings.ends_at).getTime() <= Date.now()
+    ) {
+      return NextResponse.json(
+        { error: "giveaway entries are closed" },
+        { status: 403 }
+      );
+    }
+
+    const giveawayRound = Number(settings.giveaway_round);
+
     const nonceRows = await sql`
       SELECT message, expires_at, used
       FROM giveaway_nonces
@@ -57,33 +83,20 @@ export async function POST(request: Request) {
       );
     }
 
-    if (nonce.used) {
+    if (
+      nonce.used ||
+      new Date(nonce.expires_at).getTime() <= Date.now() ||
+      nonce.message !== message
+    ) {
       return NextResponse.json(
-        { error: "verification request already used" },
+        { error: "verification request is invalid" },
         { status: 400 }
       );
     }
-
-    if (new Date(nonce.expires_at).getTime() <= Date.now()) {
-      return NextResponse.json(
-        { error: "verification request expired" },
-        { status: 400 }
-      );
-    }
-
-    if (nonce.message !== message) {
-      return NextResponse.json(
-        { error: "verification message does not match" },
-        { status: 400 }
-      );
-    }
-
-    const signature = Uint8Array.from(signatureValues);
-    const encodedMessage = new TextEncoder().encode(message);
 
     const verified = nacl.sign.detached.verify(
-      encodedMessage,
-      signature,
+      new TextEncoder().encode(message),
+      Uint8Array.from(signatureValues),
       publicKey.toBytes()
     );
 
@@ -110,19 +123,78 @@ export async function POST(request: Request) {
       );
     }
 
+    const storedSignature = JSON.stringify(signatureValues);
+
     const inserted = await sql`
-      INSERT INTO giveaway_entries (wallet, signature)
-      VALUES (${wallet}, ${JSON.stringify(signatureValues)})
-      ON CONFLICT (wallet) DO NOTHING
+      INSERT INTO giveaway_entries (
+        wallet,
+        signature,
+        giveaway_round
+      )
+      SELECT
+        ${wallet},
+        ${storedSignature},
+        giveaway_round
+      FROM giveaway_settings
+      WHERE id = 1
+        AND giveaway_round = ${giveawayRound}
+        AND entries_open = TRUE
+        AND ends_at > NOW()
+      ON CONFLICT (wallet, giveaway_round) DO NOTHING
       RETURNING wallet
+    `;
+
+    if (inserted.length === 0) {
+      const existing = await sql`
+        SELECT wallet
+        FROM giveaway_entries
+        WHERE wallet = ${wallet}
+          AND giveaway_round = ${giveawayRound}
+        LIMIT 1
+      `;
+
+      if (existing.length > 0) {
+        return NextResponse.json({
+          success: true,
+          alreadyEntered: true,
+          wallet,
+          giveawayRound,
+        });
+      }
+
+      return NextResponse.json(
+        { error: "giveaway entries are closed" },
+        { status: 403 }
+      );
+    }
+
+    const auditDetails = JSON.stringify({
+      wallet,
+      giveawayRound,
+    });
+
+    await sql`
+      INSERT INTO giveaway_audit (
+        action,
+        wallet,
+        details
+      )
+      VALUES (
+        'entry_created',
+        ${wallet},
+        ${auditDetails}::jsonb
+      )
     `;
 
     return NextResponse.json({
       success: true,
-      alreadyEntered: inserted.length === 0,
+      alreadyEntered: false,
       wallet,
+      giveawayRound,
     });
-  } catch {
+  } catch (error) {
+    console.error("giveaway entry error", error);
+
     return NextResponse.json(
       { error: "entry could not be completed" },
       { status: 500 }
