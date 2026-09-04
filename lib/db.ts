@@ -32,3 +32,4 @@ export async function initializeDatabase() {
   `;
 
   initialized = true;
+}
