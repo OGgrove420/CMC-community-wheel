@@ -77,6 +77,7 @@ function Giveaway() {
   const [giveaway, setGiveaway] = useState<GiveawayData | null>(
     null
   );
+  const [result, setResult] = useState<ResultData | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(
     getTimeLeft(null)
   );
@@ -114,7 +115,23 @@ function Giveaway() {
 
     return () => window.clearInterval(refresh);
   }, [loadGiveaway]);
+  const loadResult = useCallback(async () => {
+    try {
+      const response = await fetch("/api/results", {
+        cache: "no-store",
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "could not load result");
+      }
+
+      setResult(data);
+    } catch {
+      setResult(null);
+    }
+  }, []);
   useEffect(() => {
     const timer = window.setInterval(() => {
       setTimeLeft(getTimeLeft(giveaway?.endsAt || null));
