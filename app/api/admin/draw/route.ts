@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     }
 
     const settingsRows = await sql`
-      SELECT ends_at, winner_entry_id
+      SELECT ends_at, winner_entry_id, giveaway_round
       FROM giveaway_settings
       WHERE id = 1
       LIMIT 1
@@ -155,8 +155,9 @@ export async function POST(request: Request) {
     }
 
     const countRows = await sql`
-      SELECT COUNT(*)::INTEGER AS count
-      FROM giveaway_entries
+     SELECT COUNT(*)::INTEGER AS count
+     FROM giveaway_entries
+     WHERE giveaway_round = ${settings.giveaway_round}
     `;
 
     const entryCount = Number(countRows[0]?.count || 0);
@@ -191,6 +192,7 @@ export async function POST(request: Request) {
 
     const auditDetails = JSON.stringify({
       entryCount,
+      giveawayRound: Number(settings.giveaway_round),
       winnerIndex: selection.index,
       randomValue: selection.randomValue,
       randomCommitment,
@@ -202,6 +204,7 @@ export async function POST(request: Request) {
       WITH chosen AS (
         SELECT id
         FROM giveaway_entries
+        WHERE giveaway_round = ${settings.giveaway_round}
         ORDER BY id ASC
         OFFSET ${selection.index}
         LIMIT 1
