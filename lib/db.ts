@@ -25,10 +25,28 @@ export async function initializeDatabase() {
   await sql`
     CREATE TABLE IF NOT EXISTS giveaway_entries (
       id BIGSERIAL PRIMARY KEY,
-      wallet TEXT NOT NULL UNIQUE,
+      wallet TEXT NOT NULL,
       signature TEXT NOT NULL,
+      giveaway_round BIGINT NOT NULL DEFAULT 1,
       entered_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `;
+
+  await sql`
+    ALTER TABLE giveaway_entries
+    ADD COLUMN IF NOT EXISTS giveaway_round BIGINT
+    NOT NULL DEFAULT 1
+  `;
+
+  await sql`
+    ALTER TABLE giveaway_entries
+    DROP CONSTRAINT IF EXISTS giveaway_entries_wallet_key
+  `;
+
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS
+    giveaway_entries_wallet_round_key
+    ON giveaway_entries (wallet, giveaway_round)
   `;
 
   await sql`
@@ -38,10 +56,17 @@ export async function initializeDatabase() {
       prize TEXT NOT NULL DEFAULT 'tbd',
       ends_at TIMESTAMPTZ,
       entries_open BOOLEAN NOT NULL DEFAULT FALSE,
+      giveaway_round BIGINT NOT NULL DEFAULT 1,
       winner_entry_id BIGINT REFERENCES giveaway_entries(id),
       drawn_at TIMESTAMPTZ,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `;
+
+  await sql`
+    ALTER TABLE giveaway_settings
+    ADD COLUMN IF NOT EXISTS giveaway_round BIGINT
+    NOT NULL DEFAULT 1
   `;
 
   await sql`
