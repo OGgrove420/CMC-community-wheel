@@ -30,6 +30,16 @@ export async function POST(request: Request) {
     const message = String(body.message || "");
     const signatureValues = body.signature;
     const adminWallet = process.env.ADMIN_WALLET;
+    if (
+      !message.startsWith(
+        "CMC community wheel admin draw\n"
+      )
+    ) {
+      return NextResponse.json(
+        { error: "invalid draw authorization message" },
+        { status: 400 }
+      );
+    }
 
     if (!adminWallet) {
       return NextResponse.json(
