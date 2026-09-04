@@ -26,7 +26,18 @@ type GiveawayData = {
   drawnAt: string | null;
   updatedAt: string;
 };
-
+type ResultData = {
+  drawn: boolean;
+  winnerWallet: string | null;
+  drawnAt: string | null;
+  audit: {
+    entryCount: number;
+    winnerIndex: number;
+    randomValue: string;
+    randomCommitment: string;
+    algorithm: string;
+  } | null;
+};
 type TimeLeft = {
   days: number;
   hours: number;
