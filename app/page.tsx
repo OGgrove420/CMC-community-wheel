@@ -108,13 +108,17 @@ function Giveaway() {
     }
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
+  loadGiveaway();
+  loadResult();
+
+  const refresh = window.setInterval(() => {
     loadGiveaway();
+    loadResult();
+  }, 10000);
 
-    const refresh = window.setInterval(loadGiveaway, 10000);
-
-    return () => window.clearInterval(refresh);
-  }, [loadGiveaway]);
+  return () => window.clearInterval(refresh);
+}, [loadGiveaway, loadResult]);
   const loadResult = useCallback(async () => {
     try {
       const response = await fetch("/api/results", {
