@@ -17,6 +17,19 @@ export async function POST(request: Request) {
     const endsAtValue = String(body.endsAt || "").trim();
     const entriesOpen = body.entriesOpen === true;
     const adminWallet = process.env.ADMIN_WALLET;
+        if (
+      !message.startsWith(
+        "CMC community wheel admin\n"
+      ) ||
+      message.startsWith(
+        "CMC community wheel admin draw\n"
+      )
+    ) {
+      return NextResponse.json(
+        { error: "invalid settings authorization message" },
+        { status: 400 }
+      );
+    }
 
     if (!adminWallet) {
       return NextResponse.json(
