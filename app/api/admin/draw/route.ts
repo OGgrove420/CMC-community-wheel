@@ -7,17 +7,16 @@ import { initializeDatabase, sql } from "../../../../lib/db";
 export const runtime = "nodejs";
 
 function selectWinnerIndex(entryCount: number) {
-  const range = 1n << 256n;
-  const count = BigInt(entryCount);
-  const limit = range - (range % count);
+  const range = 4294967296;
+  const limit = range - (range % entryCount);
 
   while (true) {
-    const randomValue = randomBytes(32);
-    const value = BigInt(`0x${randomValue.toString("hex")}`);
+    const randomValue = randomBytes(4);
+    const value = randomValue.readUInt32BE(0);
 
     if (value < limit) {
       return {
-        index: Number(value % count),
+        index: value % entryCount,
         randomValue: randomValue.toString("hex"),
       };
     }
