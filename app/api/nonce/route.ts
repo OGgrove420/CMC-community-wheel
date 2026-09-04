@@ -66,11 +66,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-before committing, correct this import line:
-
-import { initializeDatabase, sql } from "../../../..//lib/db";
-
-to:
-
-import { initializeDatabase, sql } from "../../../../lib/db";
