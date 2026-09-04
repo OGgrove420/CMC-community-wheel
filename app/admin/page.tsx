@@ -24,6 +24,8 @@ function AdminPanel() {
   const [entriesOpen, setEntriesOpen] = useState(true);
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [drawing, setDrawing] = useState(false);
+  const [winnerWallet, setWinnerWallet] = useState("");
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -114,7 +116,80 @@ function AdminPanel() {
       setSaving(false);
     }
   }
+  async function drawWinner() {
+    if (!publicKey || !signMessage) {
+      setStatus("connect the authorized admin wallet first");
+      return;
+    }
 
+    const confirmed = window.confirm(
+      "draw the winner now? this action is permanent."
+    );
+
+    if (!confirmed) return;
+
+    setDrawing(true);
+    setWinnerWallet("");
+    setStatus("requesting draw authorization");
+
+    try {
+      const wallet = publicKey.toBase58();
+
+      const nonceResponse = await fetch("/api/admin/draw-nonce", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ wallet }),
+      });
+
+      const nonceResult = await nonceResponse.json();
+
+      if (!nonceResponse.ok) {
+        throw new Error(
+          nonceResult.error || "could not request draw authorization"
+        );
+      }
+
+      setStatus("approve the draw message in your wallet");
+
+      const message = String(nonceResult.message);
+      const signature = await signMessage(
+        new TextEncoder().encode(message)
+      );
+
+      setStatus("drawing winner");
+
+      const drawResponse = await fetch("/api/admin/draw", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          wallet,
+          message,
+          signature: Array.from(signature),
+        }),
+      });
+
+      const drawResult = await drawResponse.json();
+
+      if (!drawResponse.ok) {
+        throw new Error(drawResult.error || "winner draw failed");
+      }
+
+      setWinnerWallet(String(drawResult.winnerWallet));
+      setStatus("winner drawn and recorded");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "winner draw failed"
+      );
+    } finally {
+      setDrawing(false);
+    }
+  }
   return (
     <main>
       <section className="panel">
