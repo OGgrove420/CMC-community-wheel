@@ -242,7 +242,21 @@ function AdminPanel() {
             {saving ? "saving…" : "sign and save settings"}
           </button>
         </form>
+<button
+  className="save"
+  style={{ marginTop: "14px" }}
+  disabled={drawing}
+  onClick={drawWinner}
+  type="button"
+>
+  {drawing ? "drawing…" : "draw winner"}
+</button>
 
+{winnerWallet && (
+  <p className="status">
+    winner: {winnerWallet}
+  </p>
+)}
         {publicKey && (
           <p className="wallet">{publicKey.toBase58()}</p>
         )}
