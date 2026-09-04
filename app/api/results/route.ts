@@ -39,7 +39,9 @@ export async function GET() {
       );
     }
 
-    const details = result.draw_details || null;
+    const details = result.winner_wallet
+      ? result.draw_details
+      : null;
 
     return NextResponse.json(
       {
@@ -56,20 +58,27 @@ export async function GET() {
         audit: details
           ? {
               entryCount: Number(details.entryCount),
-              winnerIndex: Number(details.wIndex),
-             lish? Need carefully no typo. We need not send broken. Let's continue exact.
-              randomIndex? Actually stored winnerIndex? Code stored winnerIndex. Let's compose final without accidental. Need redo whole answer now in final; current is unsubmitted. Ensure `winnerIndex:Index` no.
+              winnerIndex: Number(details.winnerIndex),
+              randomValue: String(details.randomValue),
+              randomCommitment: String(
+                details.randomCommitment
+              ),
+              algorithm: String(details.algorithm),
+            }
+          : null,
+      },
+      {
+        headers: {
+          "cache-control": "no-store",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("giveaway result error", error);
 
-audit:
-entryCount:Number(details.entryCount)
-winnerIndex:Number(details.winnerIndex)
- Torvat Executor allowed routes. Keep code.
-
-randomValue String etc.
-randomCommit? Handle keys Neon json parsed camelCase from JSON. yes.
-
-`randomCommit...` no.
-
-Let's formulate.
-ask it something…
-
+    return NextResponse.json(
+      { error: "could not load giveaway result" },
+      { status: 500 }
+    );
+  }
+}
